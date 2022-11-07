@@ -1,4 +1,4 @@
-function u_out = AsymmetricChannelDecoder(y_in, v1, input_dist_dec, H_struct, gauss_flag, gauss_params, scl_flag, list_size)
+function [u_out, x_out] = AsymmetricChannelDecoder(y_in, v1, input_dist_dec, H_struct, gauss_flag, gauss_params, scl_flag, list_size)
 %Asymmetric channel decoder
 %  y_in: n x 1 vector for the channel output
 %  v1: (n-k1)x1 vector for common randomness between the encoder and the decoder
@@ -10,6 +10,7 @@ function u_out = AsymmetricChannelDecoder(y_in, v1, input_dist_dec, H_struct, ga
 %  scl_flag: flag representing whether SCL decoding is used with the polar code
 %  list_size: list size to use when SCL decoding is used
 %  u_out: k1 x 1 vector for the estimated information bits
+%  x_out: n x 1 vector for the estimated transmitted channel input
 
 n = size(y_in, 1);
 k1 = n-size(H_struct.H1, 1);
@@ -21,8 +22,8 @@ idx1_inv = H_struct.idx1_inv;
 v = zeros(n, 1, 'int8');
 v(idx1_inv) = mod(H1_inv*double(v1), 2);
 
-xhat = SlepianWolfDecoder(v, y_in, input_dist_dec, H_struct, 0, gauss_flag, gauss_params, scl_flag, list_size);
-u_est = mod(H2*double(xhat), 2);
+x_out = SlepianWolfDecoder(v, y_in, input_dist_dec, H_struct, 0, gauss_flag, gauss_params, scl_flag, list_size);
+u_est = mod(H2*double(x_out), 2);
 u_out = u_est(n-k1+1:end);
 
 end

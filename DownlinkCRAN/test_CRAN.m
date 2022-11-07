@@ -1,10 +1,14 @@
-%testing script for the coding scheme of the C-RAN problem
+%testing script for the coding scheme of the downlink C-RAN problem
 
 clearvars;
 close all;
 
 current_folder = pwd;
 addpath(genpath([fileparts(current_folder), filesep, 'src' ]));
+
+% If C<1, the input parameters should satisfy that (rate of compression + constraint_backoff) is smaller than C
+% If C>=1, the input parameters should satisfy that rate of compression is smaller than C 
+% (if C>=1, we don't need to use constraint_backoff since there is no need for compression)
 
 n = 1024;
 sum_rate = 12/16;
@@ -16,20 +20,21 @@ P_dB = -10:0.5:15;
 C_vec = [1 1];
 scl_flag = 0;
 list_size = 1;
-num_realizations = 1e3;
+num_realizations = 5e4;
 P = 10.^(P_dB/10);
 [R, T] = size(H);
+sum_power_flag = 0;
 target_snr_flag = 1;
 
-rate_cell = getMaximumAchievableUserRatesCRAN(H, P_dB, 'cran', C_vec);
-rate = getUserRatesCRAN(sum_rate, rate_backoff, constraint_backoff, rate_cell, 'cran');
+rate_cell = getMaximumAchievableUserRatesDownlinkCRAN(H, P_dB, 'cran', C_vec, sum_power_flag);
+rate = getUserRatesDownlinkCRAN(sum_rate, rate_backoff, constraint_backoff, rate_cell, 'cran');
 [~, idx_target_snr] = min(abs(rate_cell{1}.rate_cran - sum_rate - R*rate_backoff));
 
 target_dist = rate_cell{1}.input_dist;
 W_precoding = rate_cell{3};
 k = n*rate;
 
-checkInputParameters_Cran(n, rate, target_dist, H, C_vec+(C_vec(1)<1)*constraint_backoff); % the code construction provided works whenever fronthaul link capacities are larger than C_vec+constraint_backoff
+checkInputParameters_DownlinkCRAN(n, rate, target_dist, H, C_vec+(C_vec<1)*constraint_backoff); 
 
 x_all = 1-2*transpose(get_tuples(R+T));
 

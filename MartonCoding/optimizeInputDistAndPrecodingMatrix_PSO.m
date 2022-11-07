@@ -7,19 +7,20 @@ rng('shuffle');
 
 s_all = 1-2*transpose(get_tuples(R));
 
+% params = [P(X1=1) P(X2=1|X1=0) P(X2=1|X1=1)]
 input_dist = @(params) setInputDistFromParams(params);
 rho = @(params) (1-params(1))*(1-params(2)) + params(1)*params(3) - ( (1-params(1))*params(2) + params(1)*(1-params(3)) );
-rho_mat = @(params) [1 rho(params); rho(params) 1];
-W_mat = @(w) [w(1) w(3); w(2) w(4)];
+rho_mat = @(params) [1 rho(params); rho(params) 1]; % correlation matrix of (X1,X2) (this is not identity since the input is not iid Bern(1/2))
+W_mat = @(w) [w(1) w(3); w(2) w(4)]; % precoding matrix
 low_val = @(power,params,w) min(sqrt( power/trace(rho_mat(params)*W_mat(w)'*W_mat(w)) ) * H * W_mat(w) * s_all, [], 'all') - 5;
 upper_val = @(power,params,w) max(sqrt( power/trace(rho_mat(params)*W_mat(w)'*W_mat(w)) ) * H * W_mat(w) * s_all, [], 'all') + 5;
 sum_rate_fun = @(power,params,w) 0;
 for i_user = 1:R
-    mean_vec = @(power,params,w) sqrt( power/trace(rho_mat(params)*W_mat(w)'*W_mat(w)) ) * H(i_user,:) * W_mat(w) * s_all;
+    mean_vec = @(power,params,w) sqrt( power/trace(rho_mat(params)*W_mat(w)'*W_mat(w)) ) * H(i_user,:) * W_mat(w) * s_all; % the constant at the beginning ensures that E[||Wx||^2] < power
     sigma_vec = ones(1,2^R);
     alpha_vec = input_dist;
     fun = entropy_function(mean_vec, sigma_vec, alpha_vec);
-    entropy_Y = @(power,params,w) integral(@(y) fun(y,power,params,w), low_val(power,params,w), upper_val(power,params,w));
+    entropy_Y = @(power,params,w) integral(@(y) fun(y,power,params,w), low_val(power,params,w), upper_val(power,params,w)); % h(Y1) or h(Y2)
 
     idx_plus = (s_all(i_user,:) == 1);
     mean_vec_plus = @(power,params,w) sqrt( power/trace(rho_mat(params)*W_mat(w)'*W_mat(w)) ) * H(i_user,:) * W_mat(w) * s_all(:,idx_plus);
@@ -28,7 +29,7 @@ for i_user = 1:R
     alpha_vec_plus = @(params) (input_dist(params)*matrix_plus)/sum(input_dist(params)*matrix_plus);
     low_val_plus = @(power,params,w) min(mean_vec_plus(power,params,w), [], 'all') - 5;
     upper_val_plus = @(power,params,w) max(mean_vec_plus(power,params,w), [], 'all') + 5;
-    fun_plus = entropy_function(mean_vec_plus, sigma_vec_plus, alpha_vec_plus);
+    fun_plus = entropy_function(mean_vec_plus, sigma_vec_plus, alpha_vec_plus); % h(Y1|X1=0) or h(Y2|X2=0)
     idx_minus = (s_all(i_user,:) == -1);
     mean_vec_minus = @(power,params,w) sqrt( power/trace(rho_mat(params)*W_mat(w)'*W_mat(w)) ) * H(i_user,:) * W_mat(w) * s_all(:,idx_minus);
     sigma_vec_minus = ones(1,2^(R-1));
@@ -36,7 +37,7 @@ for i_user = 1:R
     alpha_vec_minus = @(params) (input_dist(params)*matrix_minus)/sum(input_dist(params)*matrix_minus);
     low_val_minus = @(power,params,w) min(mean_vec_minus(power,params,w), [], 'all') - 5;
     upper_val_minus = @(power,params,w) max(mean_vec_minus(power,params,w), [], 'all') + 5;
-    fun_minus = entropy_function(mean_vec_minus, sigma_vec_minus, alpha_vec_minus);
+    fun_minus = entropy_function(mean_vec_minus, sigma_vec_minus, alpha_vec_minus); % h(Y1|X1=1) or h(Y2|X2=1)
     entropy_YgivenX = @(power,params,w) sum(input_dist(params)*matrix_plus) * integral(@(y) fun_plus(y,power,params,w), low_val_plus(power,params,w), upper_val_plus(power,params,w)) + ...
         sum(input_dist(params)*matrix_minus) * integral(@(y) fun_minus(y,power,params,w), low_val_minus(power,params,w), upper_val_minus(power,params,w));
 
@@ -57,7 +58,7 @@ W_opt = cell(1,length(P));
 max_val = 2;
 
 for i_p = 1:length(P)    
-    if strcmp(scheme, 'marton_opt')
+    if strcmp(scheme, 'marton_opt') % optimize over both input distribution and precoding matrix
         if i_p > 1
             options = optimoptions('particleswarm', 'SwarmSize', 200, 'HybridFcn', @fmincon, 'InitialSwarmMatrix', [params(i_p-1,:) transpose(W_opt{i_p-1}(:))]);
         else
@@ -72,7 +73,7 @@ for i_p = 1:length(P)
         rho = input_dist(i_p,1) + input_dist(i_p,4) - (input_dist(i_p,2) + input_dist(i_p,3));
         W_opt{i_p} = reshape(x_opt(4:7), R, []);
         W_opt{i_p} = W_opt{i_p}/sqrt(trace([1 rho; rho 1]*W_opt{i_p}'*W_opt{i_p}));
-    elseif strcmp(scheme, 'marton')
+    elseif strcmp(scheme, 'marton') % optimize over input distribution
         if i_p > 1
             options = optimoptions('particleswarm', 'SwarmSize', 200, 'HybridFcn', @fmincon, 'InitialSwarmMatrix', params(i_p-1,:));
         else
@@ -85,7 +86,7 @@ for i_p = 1:length(P)
         params(i_p,:) = x_opt(1:3);
         input_dist(i_p,:) = setInputDistFromParams(params(i_p,:));
         W_opt{i_p} = [1 0; 0 1]/sqrt(2);
-    elseif strcmp(scheme, 'symmetric_opt')
+    elseif strcmp(scheme, 'symmetric_opt') % optimize over precoding matrix
         if i_p > 1
             options = optimoptions('particleswarm', 'SwarmSize', 200, 'HybridFcn', @fmincon, 'InitialSwarmMatrix', transpose(W_opt{i_p-1}(:)));
         else
@@ -107,7 +108,7 @@ end
 
 
 
-function z = pdf_channel_output(y, power, params, w, mean_vec, sigma_vec, alpha_vec)
+function z = pdf_channel_output(y, power, params, w, mean_vec, sigma_vec, alpha_vec) % channel output distribution follows a Gaussian mixture distribution
     z = 0 ;
     mean_temp = mean_vec(power, params, w);
     alpha_temp = alpha_vec(params);
@@ -116,7 +117,7 @@ function z = pdf_channel_output(y, power, params, w, mean_vec, sigma_vec, alpha_
     end
 end
 
-function z = entropy_function(mean_vec, sigma_vec, alpha_vec)
+function z = entropy_function(mean_vec, sigma_vec, alpha_vec) % entropy of a Gaussian mixture distribution
     z = @(y,power,params,w) max(0, -1 * pdf_channel_output(y, power, params, w, mean_vec, sigma_vec, alpha_vec) .* log2(pdf_channel_output(y, power, params, w, mean_vec, sigma_vec, alpha_vec)) );
 end
 

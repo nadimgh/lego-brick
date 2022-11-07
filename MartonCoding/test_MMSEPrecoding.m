@@ -13,7 +13,7 @@ H = [1 g; g 1];
 P_dB = -10:0.5:25;
 scl_flag = 0;
 list_size = 1;
-num_realizations = 1e3;
+num_realizations = 5e4;
 
 P = 10.^(P_dB/10);
 [R, T] = size(H);

@@ -15,11 +15,16 @@ P = 10.^(P_dB/10);
 
 rng('shuffle');
 tol = 1e-5;
+sum_power_flag = 0; % 1 for sum-power constraint, 0 for individual-power constraint
 
 s_all = 1-2*transpose(get_tuples(R+T));
-input_dist = @(params) setInputDistFromParamsCRAN(params);
-W_mat = @(w) [sqrt(w(1)) 0; 0 sqrt(w(2))];
-x_all = @(w) W_mat(w) * s_all(R+1:R+T,:);
+
+% params = [P(U1=1) P(U2=1|U1=0) P(U2=1|U1=1) P(X1=1|U1=0,U2=0) P(X1=1|U1=0,U2=1) P(X1=1|U1=1,U2=0) P(X1=1|U1=1,U2=1) ...
+%           P(X2=1|U1=0,U2=0,X1=0) P(X2=1|U1=0,U2=0,X1=1) P(X2=1|U1=0,U2=1,X1=0) P(X2=1|U1=0,U2=1,X1=1) ...
+%           P(X2=1|U1=1,U2=0,X1=0) P(X2=1|U1=1,U2=0,X1=1) P(X2=1|U1=1,U2=1,X1=0) P(X2=1|U1=1,U2=1,X1=1)]
+input_dist = @(params) setInputDistFromParamsDownlinkCRAN(params);
+W_mat = @(w) [sqrt(w(1)) 0; 0 sqrt(w(2))]; % diagonal precoding matrix
+x_all = @(w) W_mat(w) * s_all(R+1:R+T,:); % only X1 and X2 are inputted to the channel (corresponding to the relays)
 low_val = @(w) min(H * W_mat(w) * s_all(R+1:R+T,:), [], 'all') - 5;
 upper_val = @(w) max(H * W_mat(w) * s_all(R+1:R+T,:), [], 'all') + 5;
 sum_rate_fun = @(params,w) 0;
@@ -65,26 +70,31 @@ W_opt = cell(1,length(P));
 for i_p = 1:length(P)
     disp(['Sim iteration running = ', num2str(i_p)]);
     
-    if i_p > 1
-        options = optimoptions('ga', 'PopulationSize', 100, 'HybridFcn', @fmincon, 'ConstraintTolerance', tol, 'InitialPopulationMatrix', [params(i_p-1,:) W_opt{i_p-1}(1,1) W_opt{i_p-1}(2,2)]);
-    else
-        options = optimoptions('ga', 'PopulationSize', 100, 'HybridFcn', @fmincon, 'ConstraintTolerance', tol);
-    end
+    options = optimoptions('ga', 'PopulationSize', 100, 'HybridFcn', @fmincon, 'ConstraintTolerance', tol);
     
     fun_obj = @(x) -1*sum_rate_fun(x(1:2^(R+T)-1), x(2^(R+T):end));
-    [x_opt, fval] = ga(fun_obj, 2^(R+T)+R-1, [], [], [zeros(1,2^(R+T)-1) 1 1], P(i_p), tol*ones(1,2^(R+T)+R-1), [ones(1,2^(R+T)-1)-tol P(i_p) P(i_p)], @(x)computeNonLinearConstraintFunction(x, C_vec), options);
+    if sum_power_flag == 1 % sum-power constraint on the relays
+        [x_opt, fval] = ga(fun_obj, 2^(R+T)+R-1, [], [], [zeros(1,2^(R+T)-1) 1 1], P(i_p), tol*ones(1,2^(R+T)+R-1), [ones(1,2^(R+T)-1)-tol P(i_p) P(i_p)], @(x)computeNonLinearConstraintFunction(x, C_vec), options);
+    else % individual-power constraint on the relays
+        [x_opt, fval] = ga(fun_obj, 2^(R+T)+R-1, [], [], [], [], tol*ones(1,2^(R+T)+R-1), [ones(1,2^(R+T)-1)-tol P(i_p) P(i_p)], @(x)computeNonLinearConstraintFunction(x, C_vec), options);
+    end
     
     sum_rate(i_p) = -fval;
     params(i_p,:) = x_opt(1:2^(R+T)-1);
-    input_dist(i_p,:) = setInputDistFromParamsCRAN(params(i_p,:));
+    input_dist(i_p,:) = setInputDistFromParamsDownlinkCRAN(params(i_p,:));
     W_opt{i_p} = [sqrt(x_opt(2^(R+T))) 0; 0 sqrt(x_opt(2^(R+T)+1))];
 end
 
-matfile = sprintf('AchievableRates_DownlinkCRAN_GA_g%.2f_C%.2f.mat', g, C_vec(1));
+if sum_power_flag == 1
+    matfile = sprintf('AchievableRates_DownlinkCRAN_GA_g%.2f_C%.2f.mat', g, C_vec(1));
+else
+    matfile = sprintf('AchievableRates_DownlinkCRAN_GA_IndividualPowerConstraint_g%.2f_C%.2f.mat', g, C_vec(1));
+end
 if ~exist(matfile, 'file')
     save(matfile, 'params', 'input_dist', 'sum_rate', 'W_opt', 'P_dB', 'H', 'C_vec');
 end
 toc
+
 
 
 

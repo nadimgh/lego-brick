@@ -9,7 +9,7 @@ addpath(genpath([fileparts(current_folder), filesep, 'src' ]));
 n = 1024;
 rate_backoff = 1/8;
 theta = 0.3;
-distortion_level = 0.02;%:0.02:0.28;
+distortion_level = 0.02:0.02:0.28;
 scl_flag = 0;
 list_size = 1;
 num_realizations = 1e3;

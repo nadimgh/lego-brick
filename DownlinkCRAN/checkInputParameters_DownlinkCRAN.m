@@ -1,4 +1,4 @@
-function checkInputParameters_Cran(n, rate, target_dist, H, C_vec)
+function checkInputParameters_DownlinkCRAN(n, rate, target_dist, H, C_vec)
 %check if the input parameters to sim_cran_marton have the correct form
 
 num_power = size(target_dist,1);
@@ -35,3 +35,4 @@ end
 
 
 end
+

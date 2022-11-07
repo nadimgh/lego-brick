@@ -1,15 +1,21 @@
-function rate_cell = getMaximumAchievableUserRatesCRAN(H, P_dB, scheme, C_vec)
+function rate_cell = getMaximumAchievableUserRatesDownlinkCRAN(H, P_dB, scheme, C_vec, sum_power_flag)
 %get the maximum achievable rates by each user for one of the coding
 %schemes that we consider, where:
 %  rate_cell: 1x2 cell (or 1x3 cell if precoding matrices are to be returned) containing parameters of the maximum achievable rates 
 %  (rate_cell{1} is a struct containing H, P_dB, maximum achievable sum-rate of the coding scheme and the capacity-achieving distribution, if needed, 
 %  rate_cell{2} is a 1xlength(P_dB) cell each containing the maximum achievable user rates, 
 %  rate_cell{3} is a 1xlength(P_dB) cell each containing the optimal precoding matrix to be used at each power level)
+%  sum_power_flag: 1 for sum-power constraint, 0 for individual-power constraint
 
 g = H(1,2);
 [R, T] = size(H);
 P = 10.^(P_dB/10);
-matfile = sprintf('AchievableRates_DownlinkCRAN_GA_g%.2f_C%.2f.mat', g, C_vec(1));
+
+if sum_power_flag == 1
+    matfile = sprintf('AchievableRates_DownlinkCRAN_GA_g%.2f_C%.2f.mat', g, C_vec(1));
+else
+    matfile = sprintf('AchievableRates_DownlinkCRAN_GA_IndividualPowerConstraint_g%.2f_C%.2f.mat', g, C_vec(1));
+end
 
 if exist(matfile, 'file')
     res = load(matfile);

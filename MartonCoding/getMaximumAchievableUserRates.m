@@ -36,10 +36,10 @@ if strcmp(scheme, 'marton_opt')
         p_x1 = sum(reshape(input_dist_marton_opt_precoding(i_p,:), 2, []));
         p_x2 = transpose(sum(reshape(input_dist_marton_opt_precoding(i_p,:), 2, []), 2));
         [rate_marton_opt_precoding(i_p), rate_user] = computeCapacityMartonSpecificInputDist(H, P(i_p), W_opt{i_p}, input_dist_marton_opt_precoding(i_p,:));
-        rate_marton_opt_precoding_user{i_p}(1,2) = 1 - h2(p_x1(2));
-        rate_marton_opt_precoding_user{i_p}(2,2) = computeMutualInformation(input_dist_marton_opt_precoding(i_p,:)) + 1 - h2(p_x2(2));
-        rate_marton_opt_precoding_user{i_p}(1,1) = rate_marton_opt_precoding_user{i_p}(1,2) + abs(rate_user(1));
-        rate_marton_opt_precoding_user{i_p}(2,1) = rate_marton_opt_precoding_user{i_p}(2,2) + abs(rate_user(2));
+        rate_marton_opt_precoding_user{i_p}(1,2) = 1 - h2(p_x1(2)); % 1-H(X1)
+        rate_marton_opt_precoding_user{i_p}(2,2) = computeMutualInformation(input_dist_marton_opt_precoding(i_p,:)) + 1 - h2(p_x2(2)); % 1-H(X2|X1)
+        rate_marton_opt_precoding_user{i_p}(1,1) = rate_marton_opt_precoding_user{i_p}(1,2) + abs(rate_user(1)); % 1-H(X1|Y1)
+        rate_marton_opt_precoding_user{i_p}(2,1) = rate_marton_opt_precoding_user{i_p}(2,2) + abs(rate_user(2)); % 1-H(X2|Y2)
     end
     rate_cell{1} = struct('H', H, 'P_dB', P_dB, 'rate_marton_opt_precoding', rate_marton_opt_precoding, 'input_dist_marton_opt_precoding', input_dist_marton_opt_precoding);
     rate_cell{2} = rate_marton_opt_precoding_user;
@@ -56,10 +56,10 @@ elseif strcmp(scheme, 'marton')
         p_x1 = sum(reshape(input_dist_marton(i_p,:), 2, []));
         p_x2 = transpose(sum(reshape(input_dist_marton(i_p,:), 2, []), 2));
         [rate_marton(i_p), rate_user] = computeCapacityMartonSpecificInputDist(H, P(i_p), eye(R), input_dist_marton(i_p,:));
-        rate_marton_user{i_p}(1,2) = 1 - h2(p_x1(2));
-        rate_marton_user{i_p}(2,2) = computeMutualInformation(input_dist_marton(i_p,:)) + 1 - h2(p_x2(2));
-        rate_marton_user{i_p}(1,1) = rate_marton_user{i_p}(1,2) + abs(rate_user(1));
-        rate_marton_user{i_p}(2,1) = rate_marton_user{i_p}(2,2) + abs(rate_user(2));
+        rate_marton_user{i_p}(1,2) = 1 - h2(p_x1(2));% 1-H(X1)
+        rate_marton_user{i_p}(2,2) = computeMutualInformation(input_dist_marton(i_p,:)) + 1 - h2(p_x2(2)); % 1-H(X2|X1)
+        rate_marton_user{i_p}(1,1) = rate_marton_user{i_p}(1,2) + abs(rate_user(1)); % 1-H(X1|Y1)
+        rate_marton_user{i_p}(2,1) = rate_marton_user{i_p}(2,2) + abs(rate_user(2)); % 1-H(X2|Y2)
     end
     rate_cell{1} = struct('H', H, 'P_dB', P_dB, 'rate_marton', rate_marton, 'input_dist_marton', input_dist_marton);
     rate_cell{2} = rate_marton_user;

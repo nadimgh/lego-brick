@@ -24,13 +24,13 @@ for i = 1:num_codes
     G1 = G(A_1, :);
     H1 = transpose(G(:, A_1_c));
     idx1_inv = A_1_c;
-    H1_inv = getParityCheckSubmatrixInversePolar(H1(:,A_1_c));
+    H1_inv = getParityCheckSubmatrixInversePolar(H1(:,A_1_c)); % H1(:,A_1_c) is invertible
     info_set_1 = zeros(1,n);
     info_set_1(A_1) = 1;
 
     if k2 > 0
         [~, idx_sorted_2] = sort(bhatta{i,2});
-        [~, loc] = ismember(idx_sorted_2, A_1);
+        [~, loc] = ismember(idx_sorted_2, A_1); % choosing info_set_2 as a subset of info_set_1
         idx_sub = loc(find(loc, k2));
         A_2 = sort(A_1(idx_sub));
         A_2_c = setdiff(1:n, A_2);

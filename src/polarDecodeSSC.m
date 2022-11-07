@@ -1,5 +1,5 @@
 function [ u, x, LLR ] = polarDecodeSSC( L, info_set )
-% Polar successive cancellation decoder
+% Simplified successive cancellation decoder (identifies rate0, rate1, repetition, spc nodes)
 %   L = 1xN vector of log-likelihood ratios for the received sequence 
 %   info_set = 1xN vector with ones in the positions of non-frozen indices and zeros otherwise
 %   u = 1xN vector for the input sequence to the polar encoder

@@ -1,7 +1,8 @@
-function rate = getUserRatesCRAN(sum_rate, rate_backoff, constraint_backoff, rate_cell, scheme)
-%get the rate of the users given a sum-rate and a particulat coding scheme
+function rate = getUserRatesDownlinkCRAN(sum_rate, rate_backoff, constraint_backoff, rate_cell, scheme)
+%get the rate of the users given a sum-rate
 %  rate: rates of constituent codes at the power level that achieves sum_rate
-%  rate_backoff: backoff parameter away from the theoretical limits
+%  rate_backoff: backoff parameter away from the theoretical limits for channel codes
+%  constraint_backoff: backoff parameter away from the theoretical limits for compression codes
 
 rate_dict = (0:256)/256;
 [R, T] = size(rate_cell{1}.H);
