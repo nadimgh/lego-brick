@@ -7,6 +7,7 @@ Implementations of coding schemes are provided for the problems of:
 - Gelfand-Pinsker coding
 - Marton coding for broadcast channels
 - Coding for cloud radio access networks (downlink and uplink)
+
 Polar codes with successive cancellation decoding are used as the constituent point-to-point channel codes. The rates of the polar codes are chosen "close" to their theoretical limits, as described in the paper. The key implementations of encoders/decoders that are provided in the src directory are re-used for multiple problems. Scripts that are specific to a coding problem are given in the corresponding directory. 
 
 ## Support
@@ -21,8 +22,7 @@ If you use our work in a publication, we would appreciate using the following ci
   author = {Ghaddar, Nadim and Ganguly, Shouvik and Wang, Lele and Kim, Young-Han},  
   title = {A {Lego}-Brick Approach to Coding for Network Communication},  
   publisher = {arXiv},  
-  year = {2022},  
-  copyright = {Creative Commons Attribution 4.0 International}
+  year = {2022}
 }
 
 @misc{Ghaddar2022Github,
