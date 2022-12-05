@@ -8,7 +8,7 @@ Implementations of coding schemes are provided for the problems of:
 - Marton coding for broadcast channels
 - Coding for cloud radio access networks (downlink and uplink)
 
-Polar codes with successive cancellation decoding are used as the constituent point-to-point channel codes. The rates of the polar codes are chosen "close" to their theoretical limits, as described in the paper. The key implementations of encoders/decoders that are provided in the src directory are re-used for multiple problems. Scripts that are specific to a coding problem are given in the corresponding directory. 
+Polar codes with successive cancellation decoding are used as the constituent point-to-point channel codes. The rates of the polar codes are chosen "close" to their theoretical limits, as described in the paper. The *src* directory includes scripts that are re-used for multiple problems, including the implementations of all encoders and decoders. Scripts that are specific to a coding problem are given in the corresponding directory. 
 
 ## Support
 Any questions and/or suggestions from members of the information, coding and communication theory communities are warmly welcomed. Email: [nghaddar@ucsd.edu](mailto:nghaddar@ucsd.edu)
